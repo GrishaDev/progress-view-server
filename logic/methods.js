@@ -2,10 +2,15 @@
 // let data = require('../jsons/data.json');
 const fs = require('fs');
 const path = require("path");
+let MongoClient = require('mongodb').MongoClient;
+require('dotenv').config();
+
+const uri = 'mongodb://'+process.env.USER+':'+process.env.PASS+'@'+process.env.HOST+':'+process.env.PORT+'/'+process.env.DB;
 
 class methods{
 
     constructor(){
+        this.connectdb();
         setInterval(this.saveBackup.bind(this),3600000);
     }
 
@@ -42,7 +47,6 @@ class methods{
             if(find.found){
                 let origin = await this.readData();
                 let data = origin[find.index].data;
-                console.log(data);
                 res.json({status: true, data: data});
             }
             else
@@ -109,14 +113,21 @@ class methods{
     }
 
     async readData(){
-        let rawdata = fs.readFileSync(path.resolve(__dirname,'../jsons/data.json'));
-        let data = JSON.parse(rawdata);
-        return data;
+        // let rawdata = fs.readFileSync(path.resolve(__dirname,'../jsons/data.json'));
+        // let data = JSON.parse(rawdata);
+        // return data;
+        let thing =  await this.collection.find();
+        let data = await thing.toArray();
+        return data[0].all;
     }
 
     async writeData(data){
-        let stringed = JSON.stringify(data);
-        fs.writeFileSync(path.resolve(__dirname,'../jsons/data.json'),stringed);
+        // let stringed = JSON.stringify(data);
+        // fs.writeFileSync(path.resolve(__dirname,'../jsons/data.json'),stringed);
+        let parsed = {all: data};
+        // parsed=JSON.stringify(parsed);
+
+        let res = await this.collection.replaceOne({}, parsed);
     }
 
     async saveBackup(){
@@ -126,6 +137,26 @@ class methods{
         fs.writeFileSync(path.resolve(__dirname,'../jsons/data_backup.json'),stringed);
     }
 
+
+
+    // ============================================================================
+
+    async connectdb(){
+        try{
+            this.mongo = await MongoClient.connect(uri,{ useNewUrlParser: true },{
+                autoReconnect: true,
+                reconnectTries: 1000000,
+                reconnectInterval: 3000
+            });
+
+            // console.log("Ok");
+            this.db = this.mongo.db('progressdb');
+            this.collection = this.db.collection('data');
+        }
+        catch(err){
+            console.log("Error connecting to mongo , "+err);
+        }
+    }
 }
 
 module.exports = methods;
