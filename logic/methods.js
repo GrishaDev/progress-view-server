@@ -6,7 +6,7 @@ const path = require("path");
 class methods{
 
     constructor(){
-        
+        setInterval(this.saveBackup.bind(this),3600000);
     }
 
     async auth(req,res){
@@ -36,7 +36,6 @@ class methods{
             return;
         }
 
-        console.log(" 333 ;.LKSDFJLK;JSFJHKSDHM");
         let user = req.session.user;
         try{
             let find = await this.userExists(user);
@@ -118,6 +117,13 @@ class methods{
     async writeData(data){
         let stringed = JSON.stringify(data);
         fs.writeFileSync(path.resolve(__dirname,'../jsons/data.json'),stringed);
+    }
+
+    async saveBackup(){
+        console.log("Saving backup...");
+        let data = await this.readData();
+        let stringed = JSON.stringify(data);
+        fs.writeFileSync(path.resolve(__dirname,'../jsons/data_backup.json'),stringed);
     }
 
 }

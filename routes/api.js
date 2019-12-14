@@ -5,7 +5,6 @@ let methods = require('../logic/methods.js');
 methods = new methods();
 
 router.get('/',(req, res, next)=> {
-    console.log(";.LKSDFJLK;JSFJHKSDHM");
     methods.getData(req,res);
 });
 
